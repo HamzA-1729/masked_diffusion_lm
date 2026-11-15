@@ -11,7 +11,7 @@ Gumbel truncation bug (Zheng et al., 2024) that artificially collapses token div
 """
 
 from dataclasses import dataclass
-from typing import Optional
+
 import torch
 import torch.nn.functional as F
 
@@ -29,7 +29,7 @@ class SampleResult:
 def draw_uniform_float64(
     shape: tuple[int, ...],
     device: torch.device,
-    generator: Optional[torch.Generator] = None,
+    generator: torch.Generator | None = None,
 ) -> torch.Tensor:
     """Draws uniform random numbers in [0, 1) strictly in torch.float64."""
     return torch.rand(shape, device=device, dtype=torch.float64, generator=generator)
@@ -37,7 +37,7 @@ def draw_uniform_float64(
 
 def sample_categorical_float64(
     probs: torch.Tensor,
-    generator: Optional[torch.Generator] = None,
+    generator: torch.Generator | None = None,
 ) -> torch.Tensor:
     """
     Samples token IDs from categorical probabilities using the Gumbel-max trick
@@ -59,10 +59,10 @@ def ancestral_sample(
     mask_id: int = 4096,
     temperature: float = 1.0,
     use_cache: bool = True,
-    initial_tokens: Optional[torch.Tensor] = None,
-    clamp_mask: Optional[torch.Tensor] = None,
-    generator: Optional[torch.Generator] = None,
-    device: Optional[torch.device] = None,
+    initial_tokens: torch.Tensor | None = None,
+    clamp_mask: torch.Tensor | None = None,
+    generator: torch.Generator | None = None,
+    device: torch.device | None = None,
 ) -> SampleResult:
     """
     Exact MDLM ancestral reverse sampler.
@@ -92,7 +92,7 @@ def ancestral_sample(
         clamped = clamp_mask.to(device=device, dtype=torch.bool)
 
     ts = torch.linspace(1.0, schedule.t_eps, num_steps + 1, device=device)
-    cached_probs: Optional[torch.Tensor] = None
+    cached_probs: torch.Tensor | None = None
     changed_prev_step = True
     actual_nfe = 0
 
@@ -143,10 +143,10 @@ def confidence_topk_sample(
     mask_id: int = 4096,
     temperature: float = 1.0,
     gumbel_noise_scale: float = 0.0,
-    initial_tokens: Optional[torch.Tensor] = None,
-    clamp_mask: Optional[torch.Tensor] = None,
-    generator: Optional[torch.Generator] = None,
-    device: Optional[torch.device] = None,
+    initial_tokens: torch.Tensor | None = None,
+    clamp_mask: torch.Tensor | None = None,
+    generator: torch.Generator | None = None,
+    device: torch.device | None = None,
 ) -> SampleResult:
     """
     Extension (MaskGIT-style heuristic, NOT exact reverse posterior):
@@ -204,7 +204,7 @@ def confidence_topk_sample(
             if n_avail == 0:
                 continue
             already_unmasked = int(unclamped_counts[b].item()) - n_avail
-            target_unmasked = int(round(float(unclamped_counts[b].item()) * (1.0 - s_val)))
+            target_unmasked = round(float(unclamped_counts[b].item()) * (1.0 - s_val))
             k = min(n_avail, max(0, target_unmasked - already_unmasked))
             if k > 0:
                 topk_idx = torch.topk(masked_conf[b], k=k).indices
@@ -222,7 +222,7 @@ def infill(
     method: str = "ancestral",
     num_steps: int = 64,
     temperature: float = 1.0,
-    generator: Optional[torch.Generator] = None,
+    generator: torch.Generator | None = None,
 ) -> SampleResult:
     """
     Extension: Arbitrary-position infilling.
