@@ -3,9 +3,9 @@ Diffusion Tokenizer extending modern_decoder_llm's 4,096-token Byte-Level BPE
 with a dedicated absorbing <|mask|> token (id = 4096, vocab_size = 4097).
 """
 
-from typing import Dict, List, Optional, Sequence, Set
-import torch
+from collections.abc import Sequence
 
+import torch
 from modern_decoder_llm.tokenizer import Tokenizer as BaseTokenizer
 
 
@@ -28,13 +28,13 @@ class DiffusionTokenizer:
             self.mask_id = self.base.vocab_size
             self.vocab_size = self.base.vocab_size + 1
 
-        self.special_tokens: Dict[str, int] = dict(self.base.special_tokens)
+        self.special_tokens: dict[str, int] = dict(self.base.special_tokens)
         self.special_tokens[mask_token] = self.mask_id
-        self.inverse_special_tokens: Dict[int, str] = {
+        self.inverse_special_tokens: dict[int, str] = {
             v: k for k, v in self.special_tokens.items()
         }
 
-        self.vocab: Dict[int, bytes] = dict(self.base.vocab)
+        self.vocab: dict[int, bytes] = dict(self.base.vocab)
         self.vocab[self.mask_id] = mask_token.encode("utf-8")
 
     @property
@@ -49,13 +49,13 @@ class DiffusionTokenizer:
     def bos_id(self) -> int:
         return self.base.bos_id
 
-    def encode(self, text: str, allowed_special: Optional[Set[str]] = None) -> List[int]:
+    def encode(self, text: str, allowed_special: set[str] | None = None) -> list[int]:
         """Encodes text into token IDs (never emits <|mask|> unless explicitly in text)."""
         return self.base.encode(text, allowed_special=allowed_special)
 
     def decode(self, token_ids: Sequence[int]) -> str:
         """Decodes token IDs (including <|mask|>) back to a UTF-8 string."""
-        byte_chunks: List[bytes] = []
+        byte_chunks: list[bytes] = []
         for tid in token_ids:
             tid_int = int(tid)
             if tid_int == self.mask_id:
