@@ -42,7 +42,8 @@ def test_bidirectional_non_causality():
         logits_b = model(x_b)
 
     # Position 0 MUST depend on position -1 in a bidirectional model
-    diff = (logits_a[0, 0] - logits_b[0, 0]).abs().max().item()
+    # Slice [:4096] to exclude the -inf <|mask|> logit ((-inf) - (-inf) = nan)
+    diff = (logits_a[0, 0, :4096] - logits_b[0, 0, :4096]).abs().max().item()
     assert diff > 1e-4
 
 
