@@ -12,12 +12,12 @@ import argparse
 import json
 import math
 import os
-from typing import Dict, Tuple
+
 import torch
-import torch.nn as nn
+import yaml
+from torch import nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-import yaml
 
 from masked_diffusion_lm.dataset import DiffusionMemmapDataset, resolve_data_and_tokenizer
 from masked_diffusion_lm.loss import MDLMLoss
@@ -71,7 +71,7 @@ def evaluate_validation_elbo(
     max_batches: int,
     eval_seed: int,
     device: torch.device,
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """
     Deterministic validation: evaluates non-overlapping val windows with a fixed-seed
     stratified t grid and returns Val NELBO ± SE and Val BPB (<= ELBO) ± SE.
@@ -119,7 +119,7 @@ def evaluate_validation_elbo(
     }
 
 
-def build_model_from_config(cfg: Dict) -> MaskedDiffusionLM:
+def build_model_from_config(cfg: dict) -> MaskedDiffusionLM:
     m = cfg["model"]
     return MaskedDiffusionLM(
         vocab_size=m["vocab_size"],
@@ -138,7 +138,7 @@ def build_model_from_config(cfg: Dict) -> MaskedDiffusionLM:
     )
 
 
-def train(cfg: Dict, max_steps_override: int | None = None) -> Tuple[MaskedDiffusionLM, list[Dict]]:
+def train(cfg: dict, max_steps_override: int | None = None) -> tuple[MaskedDiffusionLM, list[dict]]:
     seed = cfg.get("seed", 42)
     torch.manual_seed(seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -185,7 +185,7 @@ def train(cfg: Dict, max_steps_override: int | None = None) -> Tuple[MaskedDiffu
     os.makedirs(ckpt_dir, exist_ok=True)
     os.makedirs(out_dir, exist_ok=True)
 
-    history: list[Dict] = []
+    history: list[dict] = []
     best_val_bpb = float("inf")
     train_iter = iter(train_loader)
 
