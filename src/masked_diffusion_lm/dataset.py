@@ -7,12 +7,12 @@ Reads the same uint16 binary shards as modern_decoder_llm for exact data parity.
 """
 
 import os
-from typing import Dict, Tuple
+
 import numpy as np
 import torch
+from modern_decoder_llm.dataset import prepare_tinystories_data
 from torch.utils.data import Dataset
 
-from modern_decoder_llm.dataset import prepare_tinystories_data
 from masked_diffusion_lm.tokenizer import DiffusionTokenizer
 
 
@@ -45,7 +45,7 @@ class DiffusionMemmapDataset(Dataset):
         return torch.from_numpy(chunk)
 
 
-def resolve_data_and_tokenizer(cfg: Dict) -> Tuple[str, str, DiffusionTokenizer]:
+def resolve_data_and_tokenizer(cfg: dict) -> tuple[str, str, DiffusionTokenizer]:
     """
     Resolves TinyStories binary shards and the 4,096-BPE tokenizer (+ <|mask|>).
     Prefers Project 2's existing artifacts when available; otherwise prepares local shards.
