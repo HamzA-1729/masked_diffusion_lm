@@ -10,17 +10,16 @@ When time_conditioning=False (default), parameter count is 5,574,144
 """
 
 import math
-from typing import Optional
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
 
+import torch
+import torch.nn.functional as F
 from modern_decoder_llm.model import (
     RMSNorm,
     SwiGLU,
     apply_rotary_emb,
     precompute_rope_freqs,
 )
+from torch import nn
 
 
 def sinusoidal_time_embedding(t: torch.Tensor, dim: int) -> torch.Tensor:
@@ -119,7 +118,7 @@ class BidirectionalBlock(nn.Module):
         x: torch.Tensor,
         cos: torch.Tensor,
         sin: torch.Tensor,
-        t_emb: Optional[torch.Tensor] = None,
+        t_emb: torch.Tensor | None = None,
     ) -> torch.Tensor:
         if self.time_conditioning:
             assert t_emb is not None, "t_emb required when time_conditioning=True"
@@ -214,7 +213,7 @@ class MaskedDiffusionLM(nn.Module):
     def forward(
         self,
         token_ids: torch.Tensor,
-        t: Optional[torch.Tensor] = None,
+        t: torch.Tensor | None = None,
         apply_subs: bool = True,
     ) -> torch.Tensor:
         """
