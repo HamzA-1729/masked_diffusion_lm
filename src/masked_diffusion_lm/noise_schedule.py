@@ -11,7 +11,7 @@ Includes the low-discrepancy stratified timestep sampler from MDLM Appendix D.3:
     u_i ~ Uniform[(i - 1) / B, i / B],   t_i = eps + (1 - eps) * u_i
 """
 
-from typing import Optional, Tuple
+
 import torch
 
 
@@ -37,8 +37,8 @@ class LogLinearSchedule:
     def sample_t(
         self,
         batch_size: int,
-        device: Optional[torch.device] = None,
-        generator: Optional[torch.Generator] = None,
+        device: torch.device | None = None,
+        generator: torch.Generator | None = None,
     ) -> torch.Tensor:
         """
         Draws batch_size stratified timesteps in [t_eps, 1.0] (MDLM Appendix D.3).
@@ -54,8 +54,8 @@ class LogLinearSchedule:
         x_0: torch.Tensor,
         t: torch.Tensor,
         mask_id: int,
-        generator: Optional[torch.Generator] = None,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        generator: torch.Generator | None = None,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Forward absorbing process q(x_t | x_0):
         Independently replaces each token with `mask_id` with probability 1 - alpha_t = t.
