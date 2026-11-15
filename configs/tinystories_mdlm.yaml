@@ -1,0 +1,60 @@
+# ==============================================================================
+# Model & Training Configuration: Discrete Masked Diffusion LM (MDLM) on TinyStories
+# Matched compute & backbone parity with modern_decoder_llm (Project 2)
+# ==============================================================================
+
+seed: 42
+
+# Model Architecture Specifications (matches P2 + 1 [MASK] token row)
+model:
+  vocab_size: 4097            # 4096 BPE tokens + 1 <|mask|> token (id=4096)
+  mask_token_id: 4096         # Dedicated absorbing [MASK] token ID
+  max_seq_len: 256            # Context window length
+  hidden_dim: 256             # Embedding dimension d
+  depth: 6                    # Number of Bidirectional Transformer layers
+  n_heads: 8                  # Query attention heads (256 / 8 = 32 head_dim)
+  n_kv_heads: 2               # Key/Value heads (4:1 GQA grouping ratio)
+  head_dim: 32                # Dimension per head (d_k)
+  ffn_dim: 768                # Explicit SwiGLU expansion dimension
+  rope_theta: 10000.0         # Base frequency for RoPE
+  tie_weights: true           # Tie output LM head with input token embeddings
+  norm_eps: 1.0e-6            # Epsilon for RMSNorm stability
+  time_conditioning: false    # Default: time-invariant (enables prediction caching)
+
+# Continuous-Time Masked Diffusion Specifications
+diffusion:
+  schedule: "log_linear"      # sigma(t) = -log(1 - t), alpha_t = 1 - t
+  t_eps: 1.0e-3               # Clamp t >= eps to bound 1/t ELBO weight
+  loss_weighting: "elbo"      # "elbo" (1/t weighted NELBO) or "unweighted"
+
+# Training & Optimization Protocol (matched with P2)
+training:
+  batch_size: 16              # Micro-batch size per step
+  grad_accum_steps: 2         # Gradient accumulation steps (effective batch = 32)
+  max_steps: 2500             # Total optimizer steps
+  lr: 3.0e-4                  # Peak learning rate after warmup
+  min_lr: 1.0e-5              # Minimum learning rate at end of cosine decay
+  warmup_steps: 200           # Linear warmup steps
+  weight_decay: 0.1           # Applied only to 2D linear weight matrices
+  grad_clip: 1.0              # Maximum global gradient L2 norm
+  eval_interval: 250          # Evaluate deterministic Val NELBO/BPB every N steps
+  eval_batches: 50            # Non-overlapping validation batches (800 sequences)
+  num_workers: 0              # DataLoader workers (0 is safest on CPU/memmap)
+
+# Data & Reference Model Paths (prefers P2 artifacts when present)
+paths:
+  tokenizer_path: "../modern_decoder_llm/checkpoints/tokenizer.json"
+  fallback_tokenizer_path: "checkpoints/tokenizer.json"
+  train_bin: "../modern_decoder_llm/data/train.bin"
+  val_bin: "../modern_decoder_llm/data/val.bin"
+  fallback_data_dir: "data"
+  ar_checkpoint: "../modern_decoder_llm/checkpoints/best_model.pt"
+  checkpoint_dir: "checkpoints"
+  output_dir: "outputs"
+
+# Sampling & Benchmark Defaults
+sampling:
+  num_steps_sweep: [16, 32, 64, 128]
+  num_eval_samples: 32
+  temperature: 1.0
+  use_cache: true
