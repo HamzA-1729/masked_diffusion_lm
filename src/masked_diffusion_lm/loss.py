@@ -9,9 +9,10 @@ the exact continuous-time ELBO expectation E[(1/t) * t] = 1.
 """
 
 from dataclasses import dataclass
+
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
 from masked_diffusion_lm.noise_schedule import LogLinearSchedule
 
