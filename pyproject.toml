@@ -1,0 +1,44 @@
+[project]
+name = "masked-diffusion-lm"
+version = "0.1.0"
+description = "From-scratch PyTorch implementation of a Discrete Masked Diffusion Language Model (MDLM) with SUBS parameterization, float64 sampling, and BPB/Gen-PPL benchmarks."
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Hamza Sajid", email = "hamzasajid.1729@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "datasets>=5.1.0",
+    "matplotlib>=3.11.2",
+    "modern-decoder-llm",
+    "numpy>=2.5.4",
+    "pyyaml>=6.0.3",
+    "tiktoken>=0.14.0",
+    "torch>=2.14.1",
+    "tqdm>=4.70.1",
+]
+
+[project.scripts]
+masked-diffusion-lm = "masked_diffusion_lm:main"
+
+[build-system]
+requires = ["uv_build>=0.12.17,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+    "ruff>=0.17.3",
+]
+
+[tool.uv.sources]
+modern-decoder-llm = { git = "https://github.com/HamzA-1729/modern_decoder_llm.git", tag = "v0.1.0" }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "."]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
