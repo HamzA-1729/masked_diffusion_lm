@@ -15,15 +15,14 @@ import argparse
 import json
 import math
 import os
-from typing import Dict, List, Optional
+
 import matplotlib.pyplot as plt
 import torch
 import torch.nn.functional as F
-from torch.utils.data import DataLoader
 import yaml
-
 from modern_decoder_llm.model import DecoderLLM
 from modern_decoder_llm.sampler import sample_next_token
+from torch.utils.data import DataLoader
 
 from masked_diffusion_lm.dataset import DiffusionMemmapDataset, resolve_data_and_tokenizer
 from masked_diffusion_lm.loss import MDLMLoss
@@ -47,7 +46,7 @@ def compute_unigram_entropy(tokens: torch.Tensor) -> float:
     return float(sum(entropies) / max(len(entropies), 1))
 
 
-def load_ar_judge(ar_ckpt_path: str, device: torch.device) -> Optional[DecoderLLM]:
+def load_ar_judge(ar_ckpt_path: str, device: torch.device) -> DecoderLLM | None:
     """Loads Project 2's DecoderLLM checkpoint if available."""
     if not os.path.exists(ar_ckpt_path):
         print(f"Warning: AR checkpoint not found at {ar_ckpt_path}; skipping AR Gen PPL / BPB.")
@@ -81,7 +80,7 @@ def evaluate_ar_val_bpb(
     tokenizer: DiffusionTokenizer,
     max_batches: int,
     device: torch.device,
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """
     Evaluates Project 2's exact AR BPB on the 255 shifted targets per 256-token window,
     using the exact UTF-8 byte count of those 255 targets as the denominator.
@@ -150,7 +149,7 @@ def generate_ar_samples(
     return tokens
 
 
-def plot_sweep(sweep_results: List[Dict], ref_ppl: Optional[float], ref_ent: float, out_path: str) -> None:
+def plot_sweep(sweep_results: list[dict], ref_ppl: float | None, ref_ent: float, out_path: str) -> None:
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4.2))
     for method in ("ancestral", "confidence_topk"):
         rows = [r for r in sweep_results if r["method"] == method]
@@ -180,7 +179,7 @@ def plot_sweep(sweep_results: List[Dict], ref_ppl: Optional[float], ref_ent: flo
     plt.close(fig)
 
 
-def run_evaluation(cfg: Dict, ckpt_path: str) -> Dict:
+def run_evaluation(cfg: dict, ckpt_path: str) -> dict:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     _, val_bin, tokenizer = resolve_data_and_tokenizer(cfg)
     seq_len = cfg["model"]["max_seq_len"]
