@@ -67,7 +67,7 @@ def load_ar_judge(ar_ckpt_path: str, device: torch.device) -> DecoderLLM | None:
         norm_eps=cfg.get("norm_eps", 1e-6),
         tie_weights=cfg.get("tie_weights", True),
     ).to(device)
-    state_dict = ckpt.get("model_state_dict", ckpt.get("model", ckpt))
+    state_dict = ckpt.get("model_state", ckpt.get("model_state_dict", ckpt.get("model", ckpt)))
     ar_model.load_state_dict(state_dict)
     ar_model.eval()
     return ar_model
