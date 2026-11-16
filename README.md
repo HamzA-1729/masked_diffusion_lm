@@ -64,6 +64,48 @@ Rao-Blackwellized NELBO = sum_masked[(1/t) * CE] / (B * L)
 
 ---
 
+## 📊 Empirical Benchmarks & Findings
+
+![NFE Step Sweep](assets/nfe_sweep_plot.png)
+
+### 1. Held-Out Likelihood Comparison (800 Non-Overlapping `val.bin` Windows)
+
+| Model | Scored Targets / Window | NLL / NELBO (nats/tok) | Bits Per Byte (BPB) | Bound Type |
+| :--- | :---: | :---: | :---: | :---: |
+| **Project 2 AR (`DecoderLLM`)** | 255 shifted | `1.7413` | **`0.8981 ± 0.0057`** | Exact NLL |
+| **Project 6 MDLM (`MaskedDiffusionLM`)** | 256 all | `2.6055 ± 0.0468` | **`1.3438 ± 0.0242`** | $\le \text{ELBO}$ |
+
+### 2. Sample Quality Sweep (`float64` Sampling, 32 Samples, $L=256$)
+
+| Sampler / Reference | Steps | Actual NFE | Gen PPL (P2 AR Judge) | Unigram Entropy (nats, ceil `5.545`) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Real Data Reference (`val.bin`)** | — | — | `5.12` | `4.30` |
+| **Project 2 AR Samples (`T=1.0`)** | 256 | 256 | `7.23` | `4.46` |
+| **Ancestral MDLM (`float64`)** | 16 | 16 | `112.77` | `4.59` |
+| **Ancestral MDLM (`float64`)** | 32 | 32 | `82.73` | `4.54` |
+| **Ancestral MDLM (`float64`)** | 64 | 64 | `81.07` | `4.54` |
+| **Ancestral MDLM (`float64`)** | 128 | 128 | `78.91` | `4.54` |
+| **Confidence Top-K *(Extension)*** | 16 | 16 | `15.14` | `3.47` |
+| **Confidence Top-K *(Extension)*** | 32 | 32 | `9.84` | `3.50` |
+| **Confidence Top-K *(Extension)*** | 64 | 64 | `7.55` | `3.52` |
+| **Confidence Top-K *(Extension)*** | 128 | 128 | `5.27` | `3.44` |
+
+> [!NOTE]
+> **Gen PPL vs. Entropy Trade-off:** `ancestral` sampling in `float64` preserves natural lexical diversity (`~4.54` nats vs. `4.30` real data), whereas `confidence_topk` drives Gen PPL down to `5.27` at the cost of a `~1.1` nat drop in unigram entropy (`3.44` nats), reflecting higher repetition and lower diversity.
+
+### 3. TinyStories Pretraining Convergence (2,500 Steps)
+
+| Step | Train NELBO | Val NELBO | Val BPB ($\le \text{ELBO}$) |
+| :---: | :---: | :---: | :---: |
+| **250** | `5.2461` | `5.1420 ± 0.0291` | `2.6523 ± 0.0155` |
+| **500** | `3.6638` | `3.7711 ± 0.0372` | `1.9451 ± 0.0194` |
+| **1,000** | `2.8937` | `3.0001 ± 0.0440` | `1.5475 ± 0.0228` |
+| **1,500** | `2.6351` | `2.7502 ± 0.0461` | `1.4184 ± 0.0238` |
+| **2,000** | `2.7868` | `2.6410 ± 0.0467` | `1.3621 ± 0.0241` |
+| **2,500 (Final)** | `2.6203` | **`2.6055 ± 0.0468`** | **`1.3438 ± 0.0242`** |
+
+---
+
 ## 📚 Mathematical Formulations
 
 ### 1. Log-Linear Absorbing Process (MDLM Appendix E.1)
